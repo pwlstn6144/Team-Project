@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Member.MemberDao">
+
+	<!-- 회원등록 -->
+
+	<insert id="insertMember">
+		INSERT INTO customer_info
+		(cst_ID, cst_PASSWORD,
+		cst_NAME, cst_PHONE, cst_EMAIL)
+		VALUES
+		(#{param1}, #{param2},
+		#{param3}, #{param4}, #{param5})
+	</insert>
+
+	<!-- 중복검사 resultType : 반환값타입 select일떄는 꼭 잇어야한다 -->
+	
+	<!-- 아이디 중복 검사 -->
+	<select id="idcheck" resultType="int">
+		SELECT COUNT(*) FROM
+		customer_info WHERE cst_ID = #{param1}
+	</select>
+
+	<!-- 고객 로그인 -->
+	<select id="userCheck" resultType="Member.MemberDto">
+		SELECT * FROM
+		customer_info WHERE cst_ID =
+		#{param1} AND cst_PASSWORD = #{param2}
+	</select>
+	
+	<!-- 기사 로그인 -->
+	<select id="WorkCheck" resultType="Member.MemberDto">
+		SELECT * FROM
+		worker_info WHERE wk_ID =
+		#{param1} AND wk_PASSWORD = #{param2}
+	</select>
+	
+	<!-- 관리자 로그인 -->
+	<select id="MasterCheck" resultType="Member.MemberDto">
+		SELECT * FROM
+		master_info WHERE master_Id =
+		#{param1} AND master_password = #{param2}
+	</select>
+
+	<!-- 회원가입 정보 확인 -->
+	<select id="getMember" resultType="Member.MemberDto">
+		SELECT * FROM customer_info
+		WHERE cst_ID = #{param1}
+	</select>
+
+	<!-- 회원정보 수정 -->
+	<update id="updateMember">
+		UPDATE customer_info SET cst_PASSWORD = #{param2},
+		cst_PHONE = #{param3}, cst_EMAIL = #{param4}
+		WHERE cst_ID = #{param1}
+	</update>
+
+	<!-- 회원삭제 -->
+	<delete id="deleteMember">
+		DELETE FROM customer_info WHERE cst_ID = #{param1}
+		AND cst_PASSWORD = #{param2}
+	</delete>
+
+	<!-- 아이디 찾기 -->
+	<select id="find_id" resultType="String">
+		SELECT cst_ID FROM customer_info WHERE cst_EMAIL = #{param1}
+	</select>
+	
+	<!--비밀번호 찾기 -->
+	<select id="find_pw" resultType="String">
+		SELECT cst_PASSWORD FROM customer_info WHERE cst_ID = #{param1} AND cst_EMAIL = #{param2}
+	</select>
+	
+	<!-- 메인 오른쪽 고객의 소리 -->
+	<select id="bestNotice" resultType="com.study.spring.dto.BDto">
+		select * from (select * from board_info where bcheck = #{param1} order by bDate desc) where <![CDATA[rownum <= 3]]>
+	</select>
+	
+	<!-- 메인 왼쪽 공지사항 -->
+	<select id="noticeBest" resultType="com.study.spring.dto.BDto">
+		select * from (select * from board_info where bcheck = #{param1} order by bhit desc) where <![CDATA[rownum <= 3]]>
+	</select>
+
+	<!-- adminLogin 체크 -->
+	<select id="adminLogin" resultType="int">
+		select count(*) from customer_info where cst_id = #{param1} and cst_password = #{param2}
+	</select>
+	
+	<!-- adminManagerLogin 체크-->
+	<select id="adminManagerLogin" resultType="int">
+		select count(*) from worker_info where wk_id = #{param1} and wk_password = #{param2}
+	</select>
+	
+	<!-- adminmasterLogin 체크 -->
+	<select id="adminmasterLogin" resultType="int">
+		select count(*) from master_info where master_id = #{param1} and master_password = #{param2}
+	</select>
+
+</mapper>

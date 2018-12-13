@@ -1,0 +1,765 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+
+<mapper namespace="com.study.spring.dao.IDao">
+	<!-- 게시물 목록 -->
+	<select id="list" resultType="com.study.spring.dto.BDto">
+		select bId, bName, bTitle, bContent, to_char(bDate, 'YYYY/MM/DD')bDate, bHit, bGroup, bStep, bIndent, bCheck  from 
+			(select ROWNUM as num , A.* from 
+				(select * from board_info where bCheck = #{param3} order by bgroup desc, bstep asc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	<!-- 게시물 갯수 -->
+	<select id="listCount" resultType="int">
+		select count(*) from board_info where bCheck = #{param1}
+	</select>
+
+	<insert id="write">
+		insert into board_info  
+			   (bId, bName, bTitle, bContent, bHit, bGroup, bStep, bIndent,bCheck) 
+			values
+			   (board_info_seq.nextval, #{param1}, #{param2}, #{param3},  0, board_info_seq.currval, 0, 0, #{param4} )
+					   
+	</insert>
+	
+	<select id="contentView" resultType="com.study.spring.dto.BDto">
+		SELECT bId, bName, bTitle, bContent, to_char(bDate, 'YYYY/MM/DD')bDate, bHit, bGroup, bStep, bIndent, bCheck FROM BOARD_info WHERE BID = #{param1}
+
+	</select>
+	
+	<update id="upHit">
+		update board_info set bHit = bHit + 1 
+			 where bId = #{param1}
+	</update>
+	
+	<update id="modify">
+		update board_info set bName = #{param2}, bTitle = #{param3}, bContent = #{param4}
+		     where bId = #{param1}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM board_info WHERE bId = #{param1}
+	</delete>
+	
+	<select id="replyView" resultType="com.study.spring.dto.BDto">
+		select * from board_info where bId = #{param1}
+	</select>
+	
+	<insert id="reply">
+		insert into board_info
+				(bId, bName, bTitle, bContent, bHit, bGroup, bStep, bIndent, bCheck)
+			values
+				(board_info_seq.nextval, #{param1}, #{param2}, #{param3}, 0, #{param4}, #{param5} + 1, #{param6} + 1, #{param7})
+	</insert>
+	
+	<update id="replyShape">
+		update board_info 
+			set bStep = bStep + 1 
+		  where bGroup = #{param1} and <![CDATA[bStep > #{param2}]]> 
+	</update>
+	<!-- 요금 확정 -->
+	<select id="orderPrice" resultType="int">
+		select pay from pay_info where slocation = #{param1} and elocation = #{param2}
+	</select>
+	
+	<!-- 배송 요청 결과 -->
+	<insert id="deliveryResult">
+		insert into customer_order
+			(cst_orderid, cst_id, cst_name, cst_PHONE, start_zip, arrive_Name, arrive_Phone, end_zip, orderkinds, direction, payment_info, bContent, orderPrices, orderRequestNumber, start_Lat, start_Lon, arrive_Lat, arrive_Lon)
+		values
+			(customer_order_seq.nextval, #{param1}, #{param2}, #{param3}, #{param4}, #{param5}, #{param6}, #{param7}, #{param8}, #{param9}, #{param10}, #{param11}, #{param12}, #{param13}, #{param14}, #{param15}, #{param16}, #{param17})
+	</insert>
+	
+	<delete id="cancel">
+		delete customer_order where cst_orderid = #{param1}
+	</delete>
+	
+	<!-- 비회원 주문번호 조회 -->
+	<select id="RequestNumberSearch" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 회원 주문번호 조회 -->
+	<select id="RequestNumberSearch2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and cst_id = #{param4} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 회원 송장번호 조회 -->
+	<select id="RequestNumberSearch3" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and wk_id = #{param4} and ordermode = 2 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 회원  주문번호 + 시작 날짜 조회 -->
+	<select id="RequestNumberSearchDate1" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and wk_id = #{param4} and ordermode = 2 and <![CDATA[orderdate >= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+		
+	</select>
+	
+	<!-- 기사 회원  송장번호 + 종료 날짜 조회 -->
+	<select id="RequestNumberSearchDate2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and wk_id = #{param4} and ordermode = 2 and  <![CDATA[orderdate <= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	
+	</select>
+	
+	<!-- 기사 회원  송장번호 + 시작 ! 종료 날짜 조회 -->
+	<select id="RequestNumberSearchDate3" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and wk_id = #{param4} and ordermode = 2 and orderdate between to_date(#{param5}) and to_date(#{param6}) + 1 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+
+	</select>
+	
+	<!-- 상세 조회 정보 -->
+	<select id="tracking_View" resultType="com.study.spring.dto.orderDto2">
+		select * from customer_order where cst_orderid = #{param1}
+	</select>
+	
+	<!-- 상세 조회 정보(기사 사진) -->
+	<select id="tracking_Picture" resultType="com.study.spring.dto.workerDto">
+		select * from worker_info where wk_Id = #{param1}
+	</select>
+	
+	<!-- 회원 전체 배송 갯수 -->
+	<select id="memberCount" resultType="int">
+		select count(*) from customer_order where cst_Id = #{param1}
+	</select>
+	
+	<!-- 기사 전체 배송 갯수 -->
+	<select id="workerCount" resultType="int">
+		select count(*) from customer_order where wk_Id = #{param1} and ordermode = 2
+	</select>
+	
+	<!--  회원 전체 배송 조회 -->
+	<select id="memberTrack" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Id = #{param3} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 전체 배송 조회 -->
+	<select id="workTrack" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where wk_Id = #{param3} and ordermode = 2 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 회원, 비회원 주문번호 갯수 -->
+	<select id="RequestNumberCount" resultType="int">
+		select count(*) from customer_order where  orderRequestNumber like '%'||#{param1}||'%' and ordermode = 2
+	</select>
+	
+	<!-- 기사 주문번호 갯수 -->
+	<select id="RequestNumberCount2" resultType="int">
+		select count(*) from customer_order where orderinvoiceNumber like '%'||#{param1}||'%' and ordermode = 2 and wk_id = #{param2}
+	</select>
+	
+	<!-- 회원 보내는 분 갯수 -->
+	<select id="cstNameCount" resultType="int">
+		select count(*) from customer_order where cst_Name like '%'||#{param1}||'%'
+	</select>
+	
+	<!-- 기사 보내는 분 갯수 -->
+	<select id="cstNameCount2" resultType="int">
+		select count(*) from customer_order where cst_Name like '%'||#{param1}||'%' and wk_id = #{param2} and ordermode = 2
+	</select>
+	
+	<!-- 회원 받는 분 갯수 -->
+	<select id="arriveNameCount" resultType="int">
+		select count(*) from customer_order where arrive_Name like '%'||#{param1}||'%'
+	</select>
+	
+	<!-- 기사 받는 분 갯수 -->
+	<select id="arriveNameCount2" resultType="int">
+		select count(*) from customer_order where arrive_Name like '%'||#{param1}||'%' and wk_id = #{param2} and ordermode = 2
+	</select>
+	
+	<!-- 회원 보내는 분 조회 -->
+	<select id="cstName" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name like '%'||#{param3}||'%' and cst_id = #{param4} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 보내는 분 조회 -->
+	<select id="cstName2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name like '%'||#{param3}||'%' and wk_id = #{param4} and ordermode = 2 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 보내는 분 + 시작 날짜 조회 -->
+	<select id="cstNameDate1" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name like '%'||#{param3}||'%' and wk_id = #{param4} and ordermode = 2 and <![CDATA[orderdate >= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 보내는 분 + 종료 날짜 조회 -->
+	<select id="cstNameDate2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name like '%'||#{param3}||'%' and wk_id = #{param4} and ordermode = 2 and <![CDATA[orderdate <= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 보내는 분 + 시작 ~ 종료 날짜 조회 -->
+	<select id="cstNameDate3" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name like '%'||#{param3}||'%' and wk_id = #{param4} and ordermode = 2 and orderdate between to_date(#{param5}) and to_date(#{param6}) + 1 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	</select>
+	
+	<!-- 회원 받는 분 조회 -->
+	<select id="arriveName" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_name like '%'||#{param3}||'%' and cst_id = #{param4} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 받는 분 조회 -->
+	<select id="arriveName2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_name like '%'||#{param3}||'%' and wk_id = #{param4} and ordermode = 2 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 받는 분 + 시작 날짜 조회 -->
+	<select id="arriveNameDate1" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name like '%'||#{param3}||'%' and wk_id = #{param4} and ordermode = 2 and <![CDATA[orderdate >= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 받는 분 + 종료 날짜 조회 -->
+	<select id="arriveNameDate2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name like '%'||#{param3}||'%' and wk_id = #{param4} and ordermode = 2 and <![CDATA[orderdate <= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 기사 받는 분 + 시작 ~ 종료 날짜 조회 -->
+	<select id="arriveNameDate3" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name like '%'||#{param3}||'%' and wk_id = #{param4} and ordermode = 2 and orderdate between to_date(#{param5}) and to_date(#{param6}) + 1 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	</select>
+	
+	<!-- 총 기사의 수 -->
+	<select id="workCount" resultType="int">
+		select count(*) from worker_info
+	</select>
+	
+	<!-- 기사 리스트 -->
+	<select id="workerList" resultType="com.study.spring.dto.workerDto">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from worker_info order by rownum desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	</select>
+	
+	<!-- 기사 정보 -->
+	<select id="workerInfo" resultType="com.study.spring.dto.workerDto">
+		select * from worker_info where wk_Id = #{param1}
+	</select>
+	
+	<!-- 총 배송 횟수 -->
+	<select id="workCount1" resultType="int">
+		select count(*) from customer_order where wk_id = #{param1} and orderMode = 2
+	</select>
+	
+	<!-- 배송 횟수 + 시작 날짜 -->
+	<select id="workCount2" resultType="int">
+		select count(*) from customer_order where wk_id = #{param1} and orderMode = 2 and <![CDATA[orderdate >= #{param2}]]>
+	</select>
+	
+	<!-- 배송 횟수 + 종료 날짜 -->
+	<select id="workCount3" resultType="int">
+		select count(*) from customer_order where wk_id = #{param1} and orderMode = 2 and <![CDATA[orderdate <= #{param2}]]>
+	</select>
+	
+	<!-- 배송 횟수 + 시작 날짜 + 종료 날짜 -->
+	<select id="workCount4" resultType="int">
+		select count(*) from customer_order where wk_id = #{param1} and orderMode = 2 and <![CDATA[orderdate >= #{param2}]]> and <![CDATA[orderdate <= #{param3}]]>
+	</select>
+	
+	<!-- 관리자용 기사 배송 횟수 -->
+	<select id="masterCount" resultType="int">
+		select count(*) from customer_order where wk_id = #{param1}
+	</select>
+	
+	<!-- 관리자가 배송조회 전체 횟수 조회 -->
+	<select id="masterCount2" resultType="int">
+		select count(*) from customer_order
+	</select>
+	
+	<!-- 관리자용 기사 배송 조회 리스트 -->
+	<select id="masterTrack" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where wk_Id = #{param3} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 관리자가 배송조회 진입 후, 리스트 조회 -->
+	<select id="masterTrack2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 관리자용 주문번호 조회 -->
+	<select id="masterRequestCount" resultType="int">
+		select count(*) from customer_order where orderRequestNumber = #{param1} and wk_id = #{param2}
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 주문번호 조회 -->
+	<select id="masterRequestCount2" resultType="int">
+		select count(*) from customer_order where orderRequestNumber = #{param1}
+	</select>
+	
+	<!-- 관리자 주문번호 검색 -->
+	<select id="masterRequestSearch" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and wk_id = #{param4} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 주문번호 조회 -->
+	<select id="masterRequestSearch2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 관리자 주문번호 + 시작 날짜 조회 -->
+	<select id="masterRequestSearchDate1" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and wk_id = #{param4} and <![CDATA[orderdate >= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+		
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 주문번호 + 시작 날짜 조회 -->
+	<select id="masterRequestSearchDate1_2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and <![CDATA[orderdate >= #{param4}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+		
+	</select>
+	
+	<!-- 관리자 주문번호 + 종료 날짜 조회 -->
+	<select id="masterRequestSearchDate2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and wk_id = #{param4} and  <![CDATA[orderdate <= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 주문번호 + 종료 날짜 조회 -->
+	<select id="masterRequestSearchDate2_2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and  <![CDATA[orderdate <= #{param4}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	
+	</select>
+	
+	<!-- 관리자 주문번호 + 시작 ~ 종료 날짜 조회 -->
+	<select id="masterRequestSearchDate3" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and wk_id = #{param4} and orderdate between to_date(#{param5}) and to_date(#{param6}) + 1 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 주문번호 + 시작 ~ 종료 날짜 조회 -->
+	<select id="masterRequestSearchDate3_2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where orderRequestNumber = #{param3} and orderdate between to_date(#{param4}) and to_date(#{param5}) + 1 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	</select>
+	
+	<!-- 관리자 보내는 분 숫자 -->
+	<select id="masterCstNameCount" resultType="int">
+		select count(*) from customer_order where cst_Name = #{param1} and wk_id = #{param2}
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 보내는 분 횟수 조회 -->
+	<select id="masterCstNameCount2" resultType="int">
+		select count(*) from customer_order where cst_Name = #{param1}
+	</select>
+	
+	<!-- 관리자 보내는 분 검색 -->
+	<select id="masterCstName" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name = #{param3} and wk_id = #{param4} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 보내는 분 검색 -->
+	<select id="masterCstName2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name = #{param3} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 관리자 보내는 분 + 시작 날짜 조회 -->
+	<select id="masterCstNameDate1" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name = #{param3} and wk_id = #{param4} and <![CDATA[orderdate >= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+		
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 보내는 분 + 시작 날짜 조회 -->
+	<select id="masterCstNameDate1_2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name = #{param3} and <![CDATA[orderdate >= #{param4}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+		
+	</select>
+	
+	<!-- 관리자 보내는 분 + 종료 날짜 조회 -->
+	<select id="masterCstNameDate2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name = #{param3} and wk_id = #{param4} and  <![CDATA[orderdate <= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 보내는 분 + 종료 날짜 -->
+	<select id="masterCstNameDate2_2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name = #{param3} and  <![CDATA[orderdate <= #{param4}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	
+	</select>
+	
+	<!-- 관리자 배송조회 메뉴에서 보내는 분 + 시작 ! 종료 날짜 조회 -->
+	<select id="masterCstNameDate3" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name = #{param3} and wk_id = #{param4} and orderdate between to_date(#{param5}) and to_date(#{param6}) + 1 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	</select>
+	<!-- 관리자가 배송조회 메뉴에서 보내는 분 + 시작 ! 종료 날짜 조회 -->
+	<select id="masterCstNameDate3_2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where cst_Name = #{param3} and orderdate between to_date(#{param4}) and to_date(#{param5}) + 1 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	</select>
+	
+	<!-- 관리자 받는 분 숫자 -->
+	<select id="masterArriveNameCount" resultType="int">
+		select count(*) from customer_order where arrive_Name = #{param1} and wk_id = #{param2}
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 받는 분 숫자 조회 -->
+	<select id="masterArriveNameCount2" resultType="int">
+		select count(*) from customer_order where arrive_Name = #{param1}
+	</select>
+	<!-- 관리자 받는 분 숫자 -->
+	<select id="masterArriveName" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name = #{param3} and wk_id = #{param4} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 받는 분 검색 -->
+	<select id="masterArriveName2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name = #{param3} order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+	</select>
+	
+	<!-- 관리자 받는 분 + 시작 날짜 조회 -->
+	<select id="masterArriveNameDate1" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name = #{param3} and wk_id = #{param4} and <![CDATA[orderdate >= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+		
+	</select>
+	
+	<!-- 관리자가 배송조회 메뉴에서 받는 분 + 시작 날짜 조회 -->
+	<select id="masterArriveNameDate1_2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name = #{param3}and <![CDATA[orderdate >= #{param4}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]> 
+		
+	</select>
+	
+	<!-- 관리자 받는 분 + 종료 날짜 조회 -->
+	<select id="masterArriveNameDate2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name = #{param3} and wk_id = #{param4} and  <![CDATA[orderdate <= #{param5}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	
+	</select>
+	
+	<!-- 관리자 받는 분 + 종료 날짜 조회 -->
+	<select id="masterArriveNameDate2_2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name = #{param3} and <![CDATA[orderdate <= #{param4}]]> order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	
+	</select>
+	
+	<!-- 관리자 받는 분 + 시작 ! 종료 날짜 조회 -->
+	<select id="masterArriveNameDate3" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name = #{param3} and wk_id = #{param4} and orderdate between to_date(#{param5}) and to_date(#{param6}) + 1 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	</select>
+	
+	<!-- 관리자 받는 분 + 시작 ! 종료 날짜 조회 -->
+	<select id="masterArriveNameDate3_2" resultType="com.study.spring.dto.orderDto2">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from customer_order where arrive_Name = #{param3} and orderdate between to_date(#{param4}) and to_date(#{param5}) + 1 order by orderdate desc) A where <![CDATA[ROWNUM <= #{param2}]]>) B where <![CDATA[B.num>= #{param1}]]>
+	</select>
+	
+	<!-- 기사 추가 -->
+	<insert id="addWorker">
+		insert into worker_info(wk_Id, wk_Name, wk_Password, wk_Phone, wk_Picture)
+		 values(#{param1}, #{param2}, #{param3}, #{param4}, #{param5})
+	</insert>
+	
+	<!-- 기사 로그인 -->
+	<select id="WorkerCheck" resultType="String">
+		select wk_Id from worker_info where wk_Id =#{param1} AND wk_Password = #{param2}
+	</select>
+	
+	<!-- 기사 삭제 -->
+	<delete id="deleteWorker">
+		delete worker_info where wk_Id = #{param1}
+	</delete>
+	
+	<!-- 기사 정보 수정 -->
+	<update id="modifyWorker">
+		update worker_info set wk_Name = #{param2}, wk_Password = #{param3}, wk_Phone = #{param4}, wk_Picture = #{param5} where wk_Id = #{param1}
+	</update>
+	
+	<!-- 기사 수 -->
+	<select id="workerNumber" resultType="int">
+		select count(*) from worker_info
+	</select>
+	
+	<!-- 고객이 즐겨찾기에 등록되었는지 여부 -->
+	<select id="customerCount" resultType="int">
+		select count(*) from customer_zip where cst_id = #{param1}
+	</select>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기1 주소 추가 -->
+	<insert id="insertCustomer1">
+		insert into customer_zip(cst_Id, cst_zip1, cst_detail1)
+			values(#{param1}, #{param2}, #{param3})
+	</insert>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기2 주소 추가 -->
+	<insert id="insertCustomer2">
+		insert into customer_zip(cst_Id, cst_zip2, cst_detail2)
+			values(#{param1}, #{param2}, #{param3})
+	</insert>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기3 주소 추가 -->
+	<insert id="insertCustomer3">
+		insert into customer_zip(cst_Id, cst_zip3, cst_detail3)
+			values(#{param1}, #{param2}, #{param3})
+	</insert>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기1 주소 업데이트 -->
+	<update id="updateCustomer1">
+		update customer_zip set cst_zip1 = #{param2}, cst_detail1 = #{param3} where cst_Id = #{param1}
+	</update>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기2 주소 업데이트 -->
+	<update id="updateCustomer2">
+		update customer_zip set cst_zip2 = #{param2}, cst_detail2 = #{param3} where cst_Id = #{param1}
+	</update>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기3 주소 업데이트 -->
+	<update id="updateCustomer3">
+		update customer_zip set cst_zip3 = #{param2}, cst_detail3 = #{param3} where cst_Id = #{param1}
+	</update>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기1 주소 추가 -->
+	<insert id="insertArrive1">
+		insert into customer_zip(cst_Id, arrive_zip1, arrive_detail1)
+			values(#{param1}, #{param2}, #{param3})
+	</insert>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기2 주소 추가 -->
+	<insert id="insertArrive2">
+		insert into customer_zip(cst_Id, arrive_zip2, arrive_detail2)
+			values(#{param1}, #{param2}, #{param3})
+	</insert>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기3 주소 추가 -->
+	<insert id="insertArrive3">
+		insert into customer_zip(cst_Id, arrive_zip3, arrive_detail3)
+			values(#{param1}, #{param2})
+	</insert>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기1 주소 업데이트 -->
+	<update id="updateArrive1">
+		update customer_zip set arrive_zip1 = #{param2}, arrive_detail1 = #{param3} where cst_Id = #{param1}
+	</update>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기2 주소 업데이트 -->
+	<update id="updateArrive2">
+		update customer_zip set arrive_zip2 = #{param2}, arrive_detail2 = #{param3} where cst_Id = #{param1}
+	</update>
+	
+	<!-- 고객이름으로 해당 순번에 즐겨찾기3 주소 업데이트 -->
+	<update id="updateArrive3">
+		update customer_zip set arrive_zip3 = #{param2}, arrive_detail3 = #{param3} where cst_Id = #{param1}
+	</update>
+	
+	<!-- 고객 이름으로 해당 순번의 즐겨찾기 주소 찾기  -->
+	<select id="selectCustomer1" resultType="com.study.spring.dto.cst_zip">
+		select * from customer_zip where cst_Id = #{param1} 
+	</select>
+	
+	<!-- 고객 이름으로 해당 순번의 즐겨찾기 주소 찾기  -->
+	<select id="selectArrive1" resultType="com.study.spring.dto.cst_zip">
+		select * from customer_zip where cst_Id = #{param1} 
+	</select>
+	
+	<!-- 관리자 기사 이름 검색 총 수 -->
+	<select id="wk_NameCount" resultType="int">
+		select count(*) from worker_info where wk_name like '%'||#{param1}||'%'
+	</select>
+	
+	<!-- 관리자 기사 이름 검색 결과 -->
+	<select id="wk_NameSearch" resultType="com.study.spring.dto.workerDto">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from worker_info where wk_name like '%'||#{param3}||'%' order by rownum desc) A where <![CDATA[ROWNUM <= #{param1}]]>) B where <![CDATA[B.num>= #{param2}]]> 
+	</select>
+	
+	<!-- 관리자 기사 전화번호 검색 총 수 -->
+	<select id="wk_PhoneCount" resultType="int">
+		select count(*) from worker_info where wk_phone = '%'||#{param1}||'%'
+	</select>
+	
+	<!-- 관리자 기사 전화번호 검색 -->
+	<select id="wk_PhoneSearch" resultType="com.study.spring.dto.workerDto">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from worker_info where wk_phone like '%'||#{param3}||'%' order by rownum desc) A where <![CDATA[ROWNUM <= #{param1}]]>) B where <![CDATA[B.num>= #{param2}]]> 
+	</select>
+	
+	<!-- 관리자 기사 아이디 검색 총 수 -->
+	<select id="wk_IdCount" resultType="int">
+		select count(*) from worker_info where wk_Id = '%'||#{param1}||'%'
+	</select>
+	
+	<!-- 관리자 기사 아이디 검색 -->
+	<select id="wk_IdSearch" resultType="com.study.spring.dto.BDto">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from worker_info where wk_Id like '%'||#{param3}||'%' order by rownum desc) A where <![CDATA[ROWNUM <= #{param1}]]>) B where <![CDATA[B.num>= #{param2}]]> 
+	</select>
+	
+	<!-- Q&A ID 검색 수 -->
+	<select id="wt_IdCount" resultType="int">
+		select count(*) from board_info where bname = '%'||#{param1}||'%' and bcheck = #{param2}
+	</select>
+	
+	<!-- Q&A id 검색 -->
+	<select id="wt_IdSearch" resultType="com.study.spring.dto.BDto">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from board_info where bname like '%'||#{param3}||'%' and bcheck = #{param4} order by rownum desc) A where <![CDATA[ROWNUM <= #{param1}]]>) B where <![CDATA[B.num>= #{param2}]]> 
+	</select>
+	
+	<!-- Q&A 제목 검색 수 -->
+	<select id="wt_TitleCount" resultType="int">
+		select count(*) from board_info where bTitle = '%'||#{param1}||'%' and bCheck = #{param2}
+	</select>
+	
+	<!-- Q&A 제목 검색 -->
+	<select id="wt_TitleSearch" resultType="com.study.spring.dto.BDto">
+		select * from 
+			(select ROWNUM as num , A.* from 
+				(select * from board_info where bTitle like '%'||#{param3}||'%' and bCheck = #{param4} order by rownum desc) A where <![CDATA[ROWNUM <= #{param1}]]>) B where <![CDATA[B.num>= #{param2}]]> 
+	</select>
+	
+	<!-- 메인화면 왼쪽 공지사항 -->
+	<select id="bestNotice" resultType="com.study.spring.dto.BDto">
+		select * from (select * from board_info where bcheck = #{param1} order by bDate desc) where <![CDATA[rownum <= 3]]>
+	</select>
+	
+	<!-- 메인화면 오른쪽 고객의 소리 -->
+	<select id="noticeBest" resultType="com.study.spring.dto.BDto">
+		select * from (select * from board_info where bcheck = #{param1} order by bhit desc) where <![CDATA[rownum <= 3]]>
+	</select>
+	
+	<!-- 요금 조회 -->
+	<select id="payTracking" resultType="int">
+		select pay from pay_info where slocation = #{param1} and elocation = #{param2}
+	</select>
+	
+	<!-- 3개월 전 배송 조회 -->
+	<select id="threeMonth" resultType="int">
+		select count(*) from customer_order where orderMode = 2 and wk_id = #{param1} and <![CDATA[FINISHED_DELIVERYTIME >= trunc(sysdate - 90, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(sysdate - 90)]]>
+	</select>
+	
+	<!-- 2개월 전 배송 조회 -->
+	<select id="twoMonth" resultType="int">
+		select count(*) from customer_order where orderMode = 2 and wk_id = #{param1} and <![CDATA[FINISHED_DELIVERYTIME >= trunc(sysdate - 60, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(sysdate - 60)]]>
+	</select>
+	
+	<!-- 1개월 전 배송 조회 -->
+	<select id="oneMonth" resultType="int">
+		select count(*) from customer_order where orderMode = 2 and wk_id = #{param1} and <![CDATA[FINISHED_DELIVERYTIME >= trunc(sysdate - 30, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(sysdate - 30)]]>
+	</select>
+	
+	<!-- 현재 배송 조회 -->
+	<select id="nowMonth" resultType="int">
+		select count(*) from customer_order where orderMode = 2 and wk_id = #{param1} and <![CDATA[FINISHED_DELIVERYTIME >= trunc(sysdate, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(sysdate)]]>
+	</select>
+	
+	<!-- 3개월 전 총 배송 조회 -->
+	<select id="allThreeMonth" resultType="int">
+		select count(*) from customer_order where orderMode = 2 and <![CDATA[FINISHED_DELIVERYTIME >= trunc(sysdate - 90, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(sysdate - 90)]]>
+	</select>
+	
+	<!-- 2개월 전 총 배송 조회 -->
+	<select id="allTwoMonth" resultType="int">
+		select count(*) from customer_order where orderMode = 2 and <![CDATA[FINISHED_DELIVERYTIME >= trunc(sysdate - 60, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(sysdate - 60)]]>
+	</select>
+	
+	<!-- 1개월 전 총 배송 조회 -->
+	<select id="allOneMonth" resultType="int">
+		select count(*) from customer_order where orderMode = 2 and <![CDATA[FINISHED_DELIVERYTIME >= trunc(sysdate - 30, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(sysdate - 30)]]>
+	</select>
+	
+	<!-- 현재 총 배송 조회 -->
+	<select id="allNowMonth" resultType="int">
+		select count(*) from customer_order where orderMode = 2 and <![CDATA[FINISHED_DELIVERYTIME >= trunc(sysdate, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(sysdate)]]>
+	</select>
+	
+	<!-- 특정 날짜 총 배송 조회 -->
+	<select id="chooseMonth" resultType="int">
+		select count(*) from customer_order where orderMode = 2 and 
+							<if test="3 == param1">
+							<![CDATA[FINISHED_DELIVERYTIME >= trunc(to_date(#{param2},'yyyymmdd') - 90, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(to_date(#{param2},'yyyymmdd') - 90)]]>
+							</if>
+							<if test="2 == param1">
+							<![CDATA[FINISHED_DELIVERYTIME >= trunc(to_date(#{param2},'yyyymmdd') - 60, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(to_date(#{param2},'yyyymmdd') - 60)]]>
+							</if>
+							<if test="1 == param1">
+							<![CDATA[FINISHED_DELIVERYTIME >= trunc(to_date(#{param2},'yyyymmdd') - 30, 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(to_date(#{param2},'yyyymmdd') - 30)]]>
+							</if>
+							<if test="0 == param1">
+							<![CDATA[FINISHED_DELIVERYTIME >= trunc(to_date(#{param2},'yyyymmdd'), 'MONTH')]]> and <![CDATA[FINISHED_DELIVERYTIME <= last_day(to_date(#{param2},'yyyymmdd'))]]>
+							</if>
+	</select>
+</mapper>

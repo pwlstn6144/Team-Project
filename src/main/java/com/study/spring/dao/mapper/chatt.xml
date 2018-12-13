@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.study.spring.dao.chatt">
+	<select id="chattCount" resultType="int">
+		select count(roomlist) as total from room where roomlist is not null
+	</select>
+	
+	<select id="roomList" resultType="com.study.spring.dto.chattDto">
+		select * from (select rownum num, A.* from (select * from room where roomlist is not null) A where <![CDATA[ROWNUM <= #{param1}]]>) B where <![CDATA[B.num>= #{param2}]]> 
+	</select>
+	
+	<select id="myDepartmentName"  resultType="String">
+		select master_depart from master_info where master_name = #{param1}
+	</select>
+	
+	<select id="myDepartmentId"  resultType="String">
+		select master_depart from master_info where master_id = #{param1}
+	</select>
+	
+	<insert id="insertRoom1">
+		insert into room(인사부) values(#{param1})
+	</insert>
+	
+	<insert id="insertRoom2">
+		insert into room(개발부) values(#{param1})
+	</insert>
+	
+	<insert id="insertRoom3">
+		insert into room(상담부) values(#{param1})
+	</insert>
+	
+	<delete id="deleteMember">
+		delete room where 
+						<if test="param1.equals('인사부')">
+						 	인사부 = #{param2}
+						</if>
+						<if test="param1.equals('개발부')">
+							개발부 = #{param2}
+						</if>
+						<if test="param1.equals('상담부')">
+							상담부 = #{param2}
+						</if>
+	</delete>
+	
+	<select id="roomMember1" resultType="String">
+		select 인사부 from room where 인사부 is not null
+	</select>
+	
+	<select id="roomMember2" resultType="String">
+		select 개발부 from room where 개발부 is not null
+	</select>
+	
+	<select id="roomMember3" resultType="String">
+		select 상담부 from room where 상담부 is not null
+	</select>
+	
+	<select id="myMasterName" resultType="String">
+		select master_name from master_info where master_id = #{param1}
+	</select>
+</mapper>

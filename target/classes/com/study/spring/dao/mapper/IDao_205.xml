@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+
+<mapper namespace="com.study.spring.dao.IDao_205">
+	
+	<update id="updateToken">
+		update worker_info set wk_token = #{param1}
+		     where wk_id = #{param2}
+	</update>
+	
+	<update id="updateLocation">
+		update worker_info set wk_lat = #{param1}, wk_lon = #{param2}
+		     where wk_token = #{param3}
+	</update>
+	
+	<update id="updateMode">
+		update worker_info set wk_mode = #{param2}
+		     where wk_token = #{param1}
+	</update>
+	
+	<update id="updateDelivery">
+		update customer_order set wk_id = #{param1}, orderInvoiceNumber = #{param3}, orderMode = 1
+		     where orderRequestNumber = #{param2}
+	</update>
+	
+	<update id="finishDelivery">
+		update customer_order set wk_id = #{param1}, finished_deliverytime = sysdate, orderMode = 0
+		     where orderInvoiceNumber = #{param2}
+	</update>
+	
+	<select id="confirmId" resultType="java.lang.String">
+		select wk_password from worker_info where wk_id = #{param1}
+	</select>
+	
+	<select id="userCheck" resultType="com.study.spring.dto.kisaDto_205">
+		select * from worker_info where wk_id = #{param1} and wk_password = #{param2}
+	</select>
+	
+	<select id="findKisa" resultType="com.study.spring.dto.kisaDto_205">
+		select * from worker_info where wk_mode = #{param1}
+	</select>
+	
+	<select id="findLocation" resultType="com.study.spring.dto.orderDto2">
+		select * from customer_order where orderMode = 0
+	</select>
+	
+	<select id="workerRecode" resultType="com.study.spring.dto.wkRecodeDto">
+		select to_char(finished_DeliveryTime, 'MM/DD')finished_DeliveryTime, orderInvoiceNumber, orderkinds, direction, payment_info, orderPrices from customer_order 
+		  where (FINISHED_DELIVERYTIME between #{param2} and #{param3} + 1)
+		   and wk_id like #{param1}
+	</select>
+	
+	<select id="cstRecode" resultType="com.study.spring.dto.wkRecodeDto">
+		select to_char(finished_DeliveryTime, 'MM/DD')finished_DeliveryTime, orderInvoiceNumber, orderkinds, direction, payment_info, orderPrices from customer_order 
+		  where (FINISHED_DELIVERYTIME between #{param2} and #{param3} + 1)
+		   and cst_id like #{param1}
+	</select>
+	
+	<select id="findNearKisa" resultType="com.study.spring.dto.kisaDto_205">
+		select * from (
+				select *
+				    
+				from worker_info
+				where <![CDATA[((select DISTNACE_WGS84(#{param1}, #{param2}, wk_lat, wk_lon) from dual) < #{param3})]]>  and worker_info.wk_mode = 0
+				)
+		
+	</select>
+	
+	
+	<select id="cstconfirmId" resultType="java.lang.String">
+		select cst_password from customer_info where cst_id = #{param1}
+	</select>
+	
+	<select id="cstuserCheck" resultType="com.study.spring.dto.cstDto_205">
+		select * from customer_info where cst_id = #{param1} and cst_password = #{param2}
+	</select>
+</mapper>
